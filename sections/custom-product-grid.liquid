@@ -1,0 +1,99 @@
+<div class="custom-product-grid">
+  {% for i in (1..6) %}
+{% capture product_setting_key %}product_{{ i }}{% endcapture %}
+{% assign product_handle = section.settings[product_setting_key] %}
+    {% if product_handle %}
+      {% assign product = all_products[product_handle] %}
+      <div class="product-block" data-variant-id="{{ product.variants.first.id }}">
+        <img src="{{ product.featured_image | img_url: 'medium' }}" alt="{{ product.title }}">
+        <h3>{{ product.title }}</h3>
+        <p>{{ product.price | money }}</p>
+      </div>
+    {% endif %}
+  {% endfor %}
+</div>
+
+<div id="popup" style="display:none;">
+  <h2 class="title"></h2>
+  <p class="price"></p>
+  <p class="description"></p>
+  <button onclick="addToCart(currentVariantId)">Add to Cart</button>
+  <button onclick="document.getElementById('popup').style.display='none'">Close</button>
+</div>
+
+<script>
+let currentVariantId = null;
+
+document.querySelectorAll('.product-block').forEach(block => {
+  block.addEventListener('click', () => {
+    currentVariantId = block.dataset.variantId;
+    openPopup(currentVariantId);
+  });
+});
+
+function openPopup(variantId) {
+  fetch(`/products/${variantId}.js`)
+    .then(res => res.json())
+    .then(product => {
+      document.querySelector('#popup .title').textContent = product.title;
+      document.querySelector('#popup .price').textContent = (product.price/100).toFixed(2) + ' USD';
+      document.querySelector('#popup .description').textContent = product.body_html.replace(/<[^>]+>/g,'');
+      document.getElementById('popup').style.display = 'block';
+    });
+}
+
+function addToCart(variantId, quantity = 1) {
+  fetch('/cart/add.js', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id: variantId, quantity })
+  })
+  .then(res => res.json())
+  .then(data => {
+    console.log('Added to cart', data);
+    checkSoftWinterJacket(variantId);
+  });
+}
+
+function checkSoftWinterJacket(variantId) {
+  fetch(`/variants/${variantId}.js`)
+    .then(res => res.json())
+    .then(variant => {
+      if(variant.option1 == 'Black' && variant.option2 == 'Medium'){
+        // Add Soft Winter Jacket automatically
+        fetch('/cart/add.js', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: YOUR_SOFT_WINTER_JACKET_VARIANT_ID, quantity: 1 })
+        });
+      }
+    });
+}
+</script>
+
+<style>
+@media (max-width: 768px) {
+  .custom-product-grid { grid-template-columns: 1fr; gap: 15px; }
+  .product-block h3 { font-size: 16px; }
+  .product-block p { font-size: 14px; }
+  #popup { width: 90%; padding: 15px; }
+}
+.custom-product-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:20px; }
+.product-block img { width:100%; cursor:pointer; }
+#popup { position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); background:#fff; padding:20px; border:1px solid #ccc; z-index:1000; }
+</style>
+
+{% schema %}
+{
+  "name": "Custom Product Grid",
+  "settings": [
+    { "type": "product", "id": "product_1", "label": "Select Product 1" },
+    { "type": "product", "id": "product_2", "label": "Select Product 2" },
+    { "type": "product", "id": "product_3", "label": "Select Product 3" },
+    { "type": "product", "id": "product_4", "label": "Select Product 4" },
+    { "type": "product", "id": "product_5", "label": "Select Product 5" },
+    { "type": "product", "id": "product_6", "label": "Select Product 6" }
+  ],
+  "presets": [{ "name": "Custom Product Grid" }]
+}
+{% endschema %}
