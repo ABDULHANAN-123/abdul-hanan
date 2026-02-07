@@ -73,9 +73,8 @@ function addToCart(variantId) {
 
   let itemsToAdd = [{ id: variantId, quantity: 1 }];
 
-  // ⚠️ SPECIAL RULE: Agar Black + Medium hai toh Jacket add hogi
   if (selectedColor === 'Black' && selectedSize === 'Medium') {
-    const jacketVariantId = "8108401524815"; // Confirm this is correct!
+    const jacketVariantId = "8108401524815"; 
     itemsToAdd.push({ id: jacketVariantId, quantity: 1 });
     alert("Special Bonus: Soft Winter Jacket added!");
   }
