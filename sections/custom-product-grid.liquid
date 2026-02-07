@@ -28,6 +28,12 @@
 <script>
 let currentVariantId = null;
 
+<img src="{{ product.featured_image | image_url: width: 480 }}" 
+     alt="{{ product.title }}" 
+     width="{{ product.featured_image.width }}" 
+     height="{{ product.featured_image.height }}"
+     loading="lazy">
+
 document.querySelectorAll('.product-block').forEach(block => {
   block.addEventListener('click', () => {
     currentVariantId = block.dataset.variantId;
