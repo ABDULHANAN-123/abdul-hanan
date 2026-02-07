@@ -1,15 +1,13 @@
 <div class="custom-product-grid">
   {% for i in (1..6) %}
-{% capture product_setting_key %}product_{{ i }}{% endcapture %}
-{% assign product_handle = section.settings[product_setting_key] %}
+    {% capture product_setting_key %}product_{{ i }}{% endcapture %}
+    {% assign product_handle = section.settings[product_setting_key] %}
     {% if product_handle %}
       {% assign product = all_products[product_handle] %}
-      <div class="product-block" data-variant-id="{{ product.variants.first.id }}">
-<img src="{{ product.featured_image | image_url: width: 480 }}" 
-     alt="{{ product.title }}" 
-     width="{{ product.featured_image.width }}" 
-     height="{{ product.featured_image.height }}"
-     loading="lazy">
+      <div class="product-block" data-variant-id="{{ product.variants.first.id }}" data-handle="{{ product.handle }}">
+        <img src="{{ product.featured_image | image_url: width: 480 }}" 
+             alt="{{ product.title }}" 
+             width="480" height="480" loading="lazy">
         <h3>{{ product.title }}</h3>
         <p>{{ product.price | money }}</p>
       </div>
@@ -18,79 +16,115 @@
 </div>
 
 <div id="popup" style="display:none;">
-  <h2 class="title"></h2>
-  <p class="price"></p>
-  <p class="description"></p>
-  
-  <button onclick="addToCart(currentVariantId)">Add to Cart</button>
-  <button onclick="document.getElementById('popup').style.display='none'">Close</button>
+  <div class="popup-content">
+    <h2 class="title"></h2>
+    <p class="price"></p>
+    
+    <div class="options-container">
+      <label>Color:</label>
+      <select id="variant-color">
+        <option value="Black">Black</option>
+        <option value="Blue">Blue</option>
+        <option value="White">White</option>
+      </select>
+
+      <label>Size:</label>
+      <select id="variant-size">
+        <option value="Small">Small</option>
+        <option value="Medium">Medium</option>
+        <option value="Large">Large</option>
+      </select>
+    </div>
+
+    <p class="description"></p>
+    <div class="popup-btns">
+      <button class="add-btn" onclick="addToCart(currentVariantId)">Add to Cart</button>
+      <button class="close-btn" onclick="document.getElementById('popup').style.display='none'">Close</button>
+    </div>
+  </div>
 </div>
 
 <script>
 let currentVariantId = null;
 
-<img src="{{ product.featured_image | image_url: width: 480 }}" 
-     alt="{{ product.title }}" 
-     width="{{ product.featured_image.width }}" 
-     height="{{ product.featured_image.height }}"
-     loading="lazy">
-
+// Click event for product blocks
 document.querySelectorAll('.product-block').forEach(block => {
   block.addEventListener('click', () => {
     currentVariantId = block.dataset.variantId;
-    openPopup(currentVariantId);
+    let handle = block.dataset.handle;
+    openPopup(handle);
   });
 });
 
-function openPopup(variantId) {
-  fetch(`/products/${variantId}.js`)
+function openPopup(handle) {
+  fetch(`/products/${handle}.js`)
     .then(res => res.json())
     .then(product => {
       document.querySelector('#popup .title').textContent = product.title;
-      document.querySelector('#popup .price').textContent = (product.price/100).toFixed(2) + ' USD';
-      document.querySelector('#popup .description').textContent = product.body_html.replace(/<[^>]+>/g,'');
+      document.querySelector('#popup .price').textContent = (product.price/100).toFixed(2) + ' ' + Shopify.currency.active;
+      document.querySelector('#popup .description').textContent = product.description.replace(/<[^>]+>/g,'').substring(0, 150) + "...";
       document.getElementById('popup').style.display = 'block';
     });
 }
 
-function addToCart(variantId, quantity = 1) {
+function addToCart(variantId) {
+  const selectedColor = document.getElementById('variant-color').value;
+  const selectedSize = document.getElementById('variant-size').value;
+
+  let itemsToAdd = [{ id: variantId, quantity: 1 }];
+
+  // ⚠️ SPECIAL RULE: Agar Black + Medium hai toh Jacket add hogi
+  if (selectedColor === 'Black' && selectedSize === 'Medium') {
+    const jacketVariantId = "8108401524815"; // Confirm this is correct!
+    itemsToAdd.push({ id: jacketVariantId, quantity: 1 });
+    alert("Special Bonus: Soft Winter Jacket added!");
+  }
+
   fetch('/cart/add.js', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ id: variantId, quantity })
+    body: JSON.stringify({ items: itemsToAdd })
   })
   .then(res => res.json())
   .then(data => {
-    console.log('Added to cart', data);
-    checkSoftWinterJacket(variantId);
-  });
-}
-
-function checkSoftWinterJacket(variantId) {
-  fetch(`/variants/${variantId}.js`)
-    .then(res => res.json())
-    .then(variant => {
-      if(variant.option1 == 'Black' && variant.option2 == 'Medium'){
-        fetch('/cart/add.js', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id: 8108401524815, quantity: 1 })
-        });
-      }
-    });
+    console.log('Success:', data);
+    window.location.href = '/cart';
+  })
+  .catch(error => console.error('Error:', error));
 }
 </script>
 
 <style>
-@media (max-width: 768px) {
-  .custom-product-grid { grid-template-columns: 1fr; gap: 15px; }
-  .product-block h3 { font-size: 16px; }
-  .product-block p { font-size: 14px; }
-  #popup { width: 90%; padding: 15px; }
+/* Grid Styling */
+.custom-product-grid { 
+  display: grid; 
+  grid-template-columns: repeat(3, 1fr); 
+  gap: 20px; 
+  padding: 20px;
 }
-.custom-product-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:20px; }
-.product-block img { width:100%; cursor:pointer; }
-#popup { position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); background:#fff; padding:20px; border:1px solid #ccc; z-index:1000; }
+.product-block { border: 1px solid #eee; padding: 10px; text-align: center; cursor: pointer; transition: 0.3s; }
+.product-block:hover { box-shadow: 0px 4px 10px rgba(0,0,0,0.1); }
+.product-block img { width: 100%; height: auto; object-fit: cover; }
+
+/* Popup Styling */
+#popup { 
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+  background: rgba(0,0,0,0.5); z-index: 1000; display: flex; align-items: center; justify-content: center; 
+}
+.popup-content { 
+  background: #fff; padding: 30px; border-radius: 8px; width: 400px; max-width: 90%; 
+  text-align: left; position: relative;
+}
+.options-container { margin: 15px 0; }
+.options-container select { width: 100%; padding: 8px; margin-bottom: 10px; border: 1px solid #ccc; }
+.popup-btns { display: flex; gap: 10px; margin-top: 20px; }
+.add-btn { background: #000; color: #fff; border: none; padding: 10px 20px; cursor: pointer; flex: 1; }
+.close-btn { background: #eee; border: none; padding: 10px 20px; cursor: pointer; }
+
+/* Mobile View */
+@media (max-width: 768px) {
+  .custom-product-grid { grid-template-columns: 1fr; }
+}
 </style>
 
 {% schema %}
