@@ -5,7 +5,11 @@
     {% if product_handle %}
       {% assign product = all_products[product_handle] %}
       <div class="product-block" data-variant-id="{{ product.variants.first.id }}">
-        <img src="{{ product.featured_image | img_url: 'medium' }}" alt="{{ product.title }}">
+<img src="{{ product.featured_image | image_url: width: 480 }}" 
+     alt="{{ product.title }}" 
+     width="{{ product.featured_image.width }}" 
+     height="{{ product.featured_image.height }}"
+     loading="lazy">
         <h3>{{ product.title }}</h3>
         <p>{{ product.price | money }}</p>
       </div>
