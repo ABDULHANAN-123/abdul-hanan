@@ -47,14 +47,16 @@
 <script>
 let currentVariantId = null;
 
+// Product click handler
 document.querySelectorAll('.product-block').forEach(block => {
   block.addEventListener('click', () => {
-    currentVariantId = parseInt(block.dataset.variantId);
+    currentVariantId = block.dataset.variantId;
     let handle = block.dataset.handle;
     openPopup(handle);
   });
 });
 
+// Open Popup function
 function openPopup(handle) {
   fetch(`/products/${handle}.js`)
     .then(res => res.json())
@@ -66,30 +68,29 @@ function openPopup(handle) {
     });
 }
 
+// Add to Cart function with Special Rule
 function addToCart() {
-  if (!currentVariantId) return;
-
-  const selectedColor = document.getElementById('variant-color').value;
-  const selectedSize = document.getElementById('variant-size').value;
-
-  console.log("Adding Product ID:", currentVariantId);
-  console.log("Options:", selectedColor, selectedSize);
-
-  let itemsToAdd = [{ 
-    id: currentVariantId, 
-    quantity: 1 
-  }];
-
-  if (selectedColor === 'Black' && selectedSize === 'Medium') {
-    alert("Matched");
-    const jacketVariantId = 44456490827855; 
-    itemsToAdd.push({ 
-      id: jacketVariantId, 
-      quantity: 1 
-    });
-    alert("Special Bonus: Soft Winter Jacket added to your cart!");
+  if (!currentVariantId) {
+    alert("Please select a product first.");
+    return;
   }
 
+  // Capturing values and cleaning them (Case-insensitive check)
+  const colorVal = document.getElementById('variant-color').value.trim().toLowerCase();
+  const sizeVal = document.getElementById('variant-size').value.trim().toLowerCase();
+
+  console.log("Checking condition for:", colorVal, sizeVal);
+
+  let itemsToAdd = [{ id: parseInt(currentVariantId), quantity: 1 }];
+
+  // ⚠️ SPECIAL RULE: Condition matching
+  if (colorVal === 'black' && sizeVal === 'medium') {
+    const jacketVariantId = 44456490827855; // Ensure this is the correct Variant ID
+    itemsToAdd.push({ id: jacketVariantId, quantity: 1 });
+    alert("Special Bonus: Soft Winter Jacket added!");
+  }
+
+  // Shopify Cart API Call
   fetch('/cart/add.js', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -97,38 +98,43 @@ function addToCart() {
   })
   .then(res => res.json())
   .then(data => {
-    console.log('Cart Update Success:', data);
-    window.location.href = '/cart';
+    console.log('Success:', data);
+    window.location.href = '/cart'; // Redirect to cart to see results
   })
   .catch(error => {
-    console.error('Cart Error:', error);
-    alert("Error adding to cart. Please try again.");
+    console.error('Error adding to cart:', error);
+    alert("Something went wrong. Check console.");
   });
 }
 </script>
 
 <style>
+/* Grid Layout */
 .custom-product-grid { 
   display: grid; 
   grid-template-columns: repeat(3, 1fr); 
   gap: 20px; 
   padding: 20px;
 }
-.product-block { border: 1px solid #eee; padding: 10px; text-align: center; cursor: pointer; transition: 0.3s; }
-.product-block img { width: 100%; height: auto; }
+.product-block { border: 1px solid #eee; padding: 15px; text-align: center; cursor: pointer; border-radius: 8px; transition: 0.3s; }
+.product-block:hover { transform: translateY(-5px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+.product-block img { width: 100%; height: auto; border-radius: 5px; }
 
+/* Popup Styles */
 #popup { 
   position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-  background: rgba(0,0,0,0.6); z-index: 1000; display: none; align-items: center; justify-content: center; 
+  background: rgba(0,0,0,0.7); z-index: 9999; display: none; align-items: center; justify-content: center; 
 }
 .popup-content { 
-  background: #fff; padding: 25px; border-radius: 12px; width: 90%; max-width: 450px; 
+  background: #fff; padding: 30px; border-radius: 15px; width: 90%; max-width: 400px; box-shadow: 0 10px 30px rgba(0,0,0,0.3);
 }
-.options-container select { width: 100%; padding: 10px; margin: 10px 0; border-radius: 5px; border: 1px solid #ddd; }
-.popup-btns { display: flex; gap: 10px; margin-top: 15px; }
-.add-btn { background: #000; color: #fff; border: none; padding: 12px; cursor: pointer; flex: 2; font-weight: bold; }
-.close-btn { background: #f4f4f4; border: none; padding: 12px; cursor: pointer; flex: 1; }
+.options-container { margin: 20px 0; }
+.options-container select { width: 100%; padding: 10px; margin-top: 5px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 5px; }
+.popup-btns { display: flex; gap: 10px; }
+.add-btn { background: #000; color: #fff; border: none; padding: 15px; cursor: pointer; flex: 2; border-radius: 5px; font-weight: bold; }
+.close-btn { background: #f0f0f0; color: #333; border: none; padding: 15px; cursor: pointer; flex: 1; border-radius: 5px; }
 
+/* Responsive */
 @media (max-width: 768px) {
   .custom-product-grid { grid-template-columns: 1fr; }
 }
