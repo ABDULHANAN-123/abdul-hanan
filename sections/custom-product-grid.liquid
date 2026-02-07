@@ -38,7 +38,7 @@
 
     <p class="description"></p>
     <div class="popup-btns">
-      <button class="add-btn" onclick="addToCart(currentVariantId)">Add to Cart</button>
+      <button class="add-btn" onclick="addToCart()">Add to Cart</button>
       <button class="close-btn" onclick="document.getElementById('popup').style.display='none'">Close</button>
     </div>
   </div>
@@ -49,7 +49,8 @@ let currentVariantId = null;
 
 document.querySelectorAll('.product-block').forEach(block => {
   block.addEventListener('click', () => {
-    currentVariantId = block.dataset.variantId;
+    // Ensure kar rahe hain ke ID number format mein ho
+    currentVariantId = parseInt(block.dataset.variantId);
     let handle = block.dataset.handle;
     openPopup(handle);
   });
@@ -60,22 +61,36 @@ function openPopup(handle) {
     .then(res => res.json())
     .then(product => {
       document.querySelector('#popup .title').textContent = product.title;
-      document.querySelector('#popup .price').textContent = (product.price/100).toFixed(2) + ' ' + Shopify.currency.active;
+      document.querySelector('#popup .price').textContent = (product.price/100).toFixed(2) + ' ' + (Shopify.currency ? Shopify.currency.active : 'USD');
       document.querySelector('#popup .description').textContent = product.description.replace(/<[^>]+>/g,'').substring(0, 150) + "...";
-      document.getElementById('popup').style.display = 'block';
+      document.getElementById('popup').style.display = 'flex';
     });
 }
 
-function addToCart(variantId) {
+function addToCart() {
+  if (!currentVariantId) return;
+
   const selectedColor = document.getElementById('variant-color').value;
   const selectedSize = document.getElementById('variant-size').value;
 
-  let itemsToAdd = [{ id: variantId, quantity: 1 }];
+  // Debugging logs - Inspect element mein check karein
+  console.log("Adding Product ID:", currentVariantId);
+  console.log("Options:", selectedColor, selectedSize);
 
+  let itemsToAdd = [{ 
+    id: currentVariantId, 
+    quantity: 1 
+  }];
+
+  // SPECIAL RULE logic
   if (selectedColor === 'Black' && selectedSize === 'Medium') {
+    // Jacket Variant ID ko as a Number pass karna behtar hai
     const jacketVariantId = 44456490827855; 
-    itemsToAdd.push({ id: jacketVariantId, quantity: 1 });
-    alert("Special Bonus: Soft Winter Jacket added!");
+    itemsToAdd.push({ 
+      id: jacketVariantId, 
+      quantity: 1 
+    });
+    alert("Special Bonus: Soft Winter Jacket added to your cart!");
   }
 
   fetch('/cart/add.js', {
@@ -85,10 +100,13 @@ function addToCart(variantId) {
   })
   .then(res => res.json())
   .then(data => {
-    console.log('Success:', data);
+    console.log('Cart Update Success:', data);
     window.location.href = '/cart';
   })
-  .catch(error => console.error('Error:', error));
+  .catch(error => {
+    console.error('Cart Error:', error);
+    alert("Error adding to cart. Please try again.");
+  });
 }
 </script>
 
@@ -100,22 +118,19 @@ function addToCart(variantId) {
   padding: 20px;
 }
 .product-block { border: 1px solid #eee; padding: 10px; text-align: center; cursor: pointer; transition: 0.3s; }
-.product-block:hover { box-shadow: 0px 4px 10px rgba(0,0,0,0.1); }
-.product-block img { width: 100%; height: auto; object-fit: cover; }
+.product-block img { width: 100%; height: auto; }
 
 #popup { 
   position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-  background: rgba(0,0,0,0.5); z-index: 1000; display: flex; align-items: center; justify-content: center; 
+  background: rgba(0,0,0,0.6); z-index: 1000; display: none; align-items: center; justify-content: center; 
 }
 .popup-content { 
-  background: #fff; padding: 30px; border-radius: 8px; width: 400px; max-width: 90%; 
-  text-align: left; position: relative;
+  background: #fff; padding: 25px; border-radius: 12px; width: 90%; max-width: 450px; 
 }
-.options-container { margin: 15px 0; }
-.options-container select { width: 100%; padding: 8px; margin-bottom: 10px; border: 1px solid #ccc; }
-.popup-btns { display: flex; gap: 10px; margin-top: 20px; }
-.add-btn { background: #000; color: #fff; border: none; padding: 10px 20px; cursor: pointer; flex: 1; }
-.close-btn { background: #eee; border: none; padding: 10px 20px; cursor: pointer; }
+.options-container select { width: 100%; padding: 10px; margin: 10px 0; border-radius: 5px; border: 1px solid #ddd; }
+.popup-btns { display: flex; gap: 10px; margin-top: 15px; }
+.add-btn { background: #000; color: #fff; border: none; padding: 12px; cursor: pointer; flex: 2; font-weight: bold; }
+.close-btn { background: #f4f4f4; border: none; padding: 12px; cursor: pointer; flex: 1; }
 
 @media (max-width: 768px) {
   .custom-product-grid { grid-template-columns: 1fr; }
