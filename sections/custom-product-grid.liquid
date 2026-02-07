@@ -49,7 +49,6 @@ let currentVariantId = null;
 
 document.querySelectorAll('.product-block').forEach(block => {
   block.addEventListener('click', () => {
-    // Ensure kar rahe hain ke ID number format mein ho
     currentVariantId = parseInt(block.dataset.variantId);
     let handle = block.dataset.handle;
     openPopup(handle);
@@ -73,7 +72,6 @@ function addToCart() {
   const selectedColor = document.getElementById('variant-color').value;
   const selectedSize = document.getElementById('variant-size').value;
 
-  // Debugging logs - Inspect element mein check karein
   console.log("Adding Product ID:", currentVariantId);
   console.log("Options:", selectedColor, selectedSize);
 
