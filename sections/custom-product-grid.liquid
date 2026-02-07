@@ -82,9 +82,7 @@ function addToCart() {
     quantity: 1 
   }];
 
-  // SPECIAL RULE logic
   if (selectedColor === 'Black' && selectedSize === 'Medium') {
-    // Jacket Variant ID ko as a Number pass karna behtar hai
     const jacketVariantId = 44456490827855; 
     itemsToAdd.push({ 
       id: jacketVariantId, 
