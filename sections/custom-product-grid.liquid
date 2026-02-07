@@ -70,11 +70,10 @@ function checkSoftWinterJacket(variantId) {
     .then(res => res.json())
     .then(variant => {
       if(variant.option1 == 'Black' && variant.option2 == 'Medium'){
-        // Add Soft Winter Jacket automatically
         fetch('/cart/add.js', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id: YOUR_SOFT_WINTER_JACKET_VARIANT_ID, quantity: 1 })
+          body: JSON.stringify({ id: 8108401524815, quantity: 1 })
         });
       }
     });
